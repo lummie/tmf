@@ -58,5 +58,13 @@ func(d *CsvDatasource) Columns() []string {
 }
 
 func(d *CsvDatasource) Rows() (int, error) {
-	return ioext.CountLines(d.reader, []byte{'\n'})
+	if !d.counted {
+		c, err := ioext.CountLines(d.reader, []byte{'\n'})
+		if err != nil {
+			return 0, err
+		}
+		d.rows, d.counted = c, true
+		return c, nil
+	}
+	return d.rows, nil
 }
