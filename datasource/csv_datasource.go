@@ -11,53 +11,53 @@ import (
 
 var ErrEOF = errors.New("EOF reached when reading")
 
-
-
-
-
-
 type CsvDatasource struct {
-	reader io.Reader
+	reader  io.Reader
 	columns []string
-	rows int
+	rows    int
 	counted bool
 }
-
 
 // NewCsvDataSource create a new data source for a csv file
 func NewCsvDataSource(reader io.Reader) *CsvDatasource {
 	c := CsvDatasource{
-		reader:reader,
-		columns : make([]string,0),
-		counted : false,
-		rows : 0,
+		reader:  reader,
+		columns: make([]string, 0),
+		counted: false,
+		rows:    0,
 	}
 	return &c
 }
 
 // String returns a formatted information about the data source
-func(d *CsvDatasource) String() string {
+func (d *CsvDatasource) String() string {
 	return fmt.Sprintf("cols:%#v rows:%d", d.columns, d.rows)
 }
 
-func(d *CsvDatasource) ReadHeadersFromRow(row uint) error {
+// ReadHeadersFromRow allows the columns to be initialized by reading a specific row in the input
+func (d *CsvDatasource) ReadHeadersFromRow(row uint) error {
 	s := bufio.NewScanner(d.reader)
 	for i := uint(0); i < row; i++ {
 		if !s.Scan() {
 			return ErrEOF
 		}
 	}
-
-	d.columns = strings.Split(s.Text(),",")
-
+	d.columns = strings.Split(s.Text(), ",")
 	return nil
 }
 
-func(d *CsvDatasource) Columns() []string {
+// Columns returns the list of columns in the data source
+func (d *CsvDatasource) Columns() []string {
 	return d.columns
 }
 
-func(d *CsvDatasource) Rows() (int, error) {
+// UpdateColumns allows setting of the columns for the data source
+func (d *CsvDatasource) UpdateColumns(cols []string) {
+	d.columns = cols
+}
+
+// Rows returns the number of rows in the datasource seperated by CR
+func (d *CsvDatasource) Rows() (int, error) {
 	if !d.counted {
 		c, err := ioext.CountLines(d.reader, []byte{'\n'})
 		if err != nil {
